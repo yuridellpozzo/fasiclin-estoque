@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://img.icons8.com/external-soft-fill-juicy-fish/150/external-inventory-automation-technology-soft-fill-juicy-fish.png" alt="Logo Estoque" width="150"/>
+  <img src="" alt="Logo Estoque" width="150"/>
   <h1>📦 Fasiclin Estoque</h1>
   <p>
     <strong>API RESTful para o sistema de gerenciamento de estoque "Fasiclin", construída com Java e Spring Boot.</strong>
