@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="" alt="Logo Estoque" width="150"/>
+  <img src="https://github.com/user-attachments/assets/20a36d8d-228f-410b-a4b8-992b18d334db" alt="" width="450"/>
   <h1>📦 Fasiclin Estoque</h1>
   <p>
     <strong>API RESTful para o sistema de gerenciamento de estoque "Fasiclin", construída com Java e Spring Boot.</strong>
@@ -71,7 +71,7 @@ Siga os passos abaixo para configurar e executar o projeto localmente.
 ### **Pré-requisitos**
 
 Antes de começar, você vai precisar ter instalado em sua máquina:
--   **Java JDK 24**
+-   [Java JDK 24](https://www.oracle.com/br/java/technologies/downloads/)
 -   [Apache Maven](https://maven.apache.org/download.cgi)
 -   [MySQL Server](https://dev.mysql.com/downloads/mysql/)
 -   [Git](https://git-scm.com/downloads)
