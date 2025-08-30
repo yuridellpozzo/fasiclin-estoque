@@ -15,14 +15,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PessoasJuridica {
+public class PessoaJuridica {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IDPESSOAJUR")
     private Integer id;
     
-    // A tabela PESSOA foi abstraída aqui, mas o ID_PESSOA é o link
     @Column(name = "ID_PESSOA", nullable = false, unique = true)
     private Integer idPessoa;
 

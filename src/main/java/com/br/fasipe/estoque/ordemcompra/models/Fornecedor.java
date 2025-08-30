@@ -37,7 +37,7 @@ public class Fornecedor {
     @NotNull(message = "A pessoa jurídica deve ser informada.")
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_PESSOA", nullable = false, unique = true)
-    private PessoasJuridica pessoasJuridica;
+    private PessoaJuridica pessoasJuridica;
 
      @Size(max = 100)
     @Column(name = "REPRESENT", length = 100)
