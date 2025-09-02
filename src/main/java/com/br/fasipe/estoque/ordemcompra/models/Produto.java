@@ -14,6 +14,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,7 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "PRODUTOS")
+@Table(name = "PRODUTO")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -54,4 +56,23 @@ public class Produto {
     @JoinColumn(name = "ID_UNMEDI", nullable = false)
     private UnidadeMedida unidadeMedida;
 
+    @NotBlank(message = "O código de barras não pode ser vazio.")
+    @Size(max = 50, message = "O código de barras não pode exceder 50 caracteres.")
+    @Column(name = "CODBARRAS", nullable = false, length = 50, unique = true)
+    private String codBarras;
+    
+    @Column(name = "TEMPIDEAL", precision = 3, scale = 1)
+    private BigDecimal tempIdeal;
+    
+    @NotNull(message = "O estoque máximo deve ser informado.")
+    @Column(name = "STQMAX", nullable = false)
+    private Integer stqMax;
+    
+    @NotNull(message = "O estoque mínimo deve ser informado.")
+    @Column(name = "STQMIN", nullable = false)
+    private Integer stqMin;
+    
+    @NotNull(message = "O ponto de pedido deve ser informado.")
+    @Column(name = "PNTPEDIDO", nullable = false)
+    private Integer ptnPedido;
 }

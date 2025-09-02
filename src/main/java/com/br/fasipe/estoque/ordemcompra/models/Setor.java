@@ -4,35 +4,30 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.FetchType;
 
 @Entity
-@Table(name = "ALMOXARIFADO")
+@Table(name = "SETOR")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"setor"})
-public class Almoxarifado {
+public class Setor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "IDALMOX")
+    @Column(name = "IDSETOR")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_SETOR", nullable = false)
-    private Setor setor;
+    // Temporariamente usando Integer em vez de Profissional
+    // até que a entidade Profissional seja criada
+    @Column(name = "ID_PROFISSIO", nullable = false)
+    private Integer idProfissional;
 
-    @Column(name = "NOMEALMO", nullable = false, unique = true, length = 100)
+    @Column(name = "NOMESETOR", nullable = false, unique = true, length = 50)
     private String nome;
-
 }
