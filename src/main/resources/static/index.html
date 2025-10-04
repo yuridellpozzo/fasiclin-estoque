@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fasicomércio - Sistema de Estoque</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilo para o novo botão de concluir */
+        .btn-concluir {
+            padding: 5px 10px;
+            background-color: #27ae60; /* Verde */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        .btn-concluir:hover { background-color: #229954; }
+    </style>
+    <link rel="stylesheet" href="./styless.css"> 
+</head>
+<body>
+    <header class="header">
+        <div class="logo">Fasi<span>comércio</span></div>
+        <div class="user-avatar">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <nav>
+                <a class="nav-item" data-page="home" onclick="showPage('home')">Início</a>
+                <a class="nav-item" data-page="produtos" onclick="showPage('produtos')">Produtos</a>
+                <a class="nav-item" data-page="pedidos" onclick="showPage('pedidos')">Meus Pedidos</a>
+                <a class="nav-item" data-page="perfil" onclick="showPage('perfil')">Perfil</a>
+                <a class="nav-item" data-page="config" onclick="showPage('config')">Configurações</a>
+                <a class="nav-item active" data-page="estoque" onclick="showPage('estoque')">Estoque</a>
+                <a class="nav-item" data-page="admin" onclick="showPage('admin', this)">Admin DB</a>
+            </nav>
+            <button class="logout-btn" onclick="logout()">Sair</button>
+        </aside>
+
+        <main class="content">
+            <div id="alertContainer"></div>
+
+            <div id="recebimentoPage" class="content-card">
+                <h2 class="section-title">Recebimento de Lote</h2>
+                
+                <form id="recebimentoForm" class="form-container">
+                    <div class="form-group">
+                        <label for="ordemCompra">Ordem de Compra:</label>
+                        <select id="ordemCompra" required>
+                            <option value="">Selecione uma ordem de compra...</option>
+                        </select>
+                    </div>
+
+                    <!-- Container para os itens dinâmicos -->
+                    <div id="itensDaOrdemContainer"></div>
+
+                    <!-- Campos que só aparecem após selecionar a OC -->
+                    <div id="formFields" class="hidden" style="margin-top: 30px;">
+                        <div class="form-group">
+                            <label for="responsavel">Responsável pelo Recebimento:</label>
+                            <select id="idResponsavel" required>
+                                <option value="">Selecione o responsável...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="login">Login:</label>
+                            <input type="text" id="login" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="senha">Senha:</label>
+                            <input type="password" id="senha" required>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
+                            <button type="submit" class="submit-btn">Concluir Recebimento</button>
+                            
+                            <button type="button" 
+                                    class="submit-btn" 
+                                    id="btnConcluirOrdem" 
+                                    onclick="confirmarConclusaoManual()" 
+                                    style="background-color: #2ecc71; /* Cor Verde */">
+                                Concluir Ordem
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <div id="ordensPage" class="content-card hidden">
+                <h2 class="section-title">Lista de Ordens de Compra</h2>
+                
+                <div class="filter-container">
+                    <button class="filter-btn active" onclick="filterOrdens('all', this)">Todas</button>
+                    <button class="filter-btn" onclick="filterOrdens('PEND', this)">Pendentes</button>
+                    <button class="filter-btn" onclick="filterOrdens('ANDA', this)">Em Andamento</button>
+                    <button class="filter-btn" onclick="filterOrdens('CONC', this)">Concluídas</button>
+                </div>
+
+                <div class="table-container">
+                    <div id="loadingSpinner" class="spinner hidden"></div>
+                    <table id="ordensTable" class="hidden">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Status</th>
+                                <th>Data Prevista</th>
+                                <th>Data Entrega</th>
+                                <th>Valor Total</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordensTableBody">
+                        </tbody>
+                    </table>
+                    <div id="emptyMessage" class="hidden" style="text-align: center; padding: 40px; color: #666;">
+                        Nenhuma ordem de compra encontrada.
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminPage" class="content-card hidden">
+                <h2 class="section-title">Gerenciador de Conexões do Banco</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <button class="submit-btn" style="margin: 0;" onclick="loadConnections()">Atualizar Lista</button>
+                    <button class="submit-btn" style="margin: 0; background-color: #c0392b;" onclick="killAllConnections()">Derrubar Todas Conexões</button>
+                </div>
+                <p>Total de conexões ativas: <strong id="connectionCount">0</strong></p>
+                <div class="table-container">
+                    <table id="connectionsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuário</th>
+                                <th>Host</th>
+                                <th>Comando</th>
+                                <th>Tempo (s)</th>
+                                <th>Info</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connectionsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
