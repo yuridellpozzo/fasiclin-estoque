@@ -33,6 +33,27 @@ public class EstoqueService extends BaseService {
     private EstoqueRepository estoqueRepository;
 
     /**
+     * Busca um registro de Estoque pelo ID do Produto e ID do Lote.
+     * Este é o método chave para a lógica de recebimento de pedidos.
+     * @param idProduto ID do produto
+     * @param idLote ID do lote
+     * @return Optional contendo o estoque se encontrado
+     */
+    public Optional<Estoque> findByProdutoAndLoteId(Integer idProduto, Integer idLote) {
+        long startTime = System.currentTimeMillis();
+        log.info("Buscando estoque por Produto ID: {} e Lote ID: {}", idProduto, idLote);
+        
+        // ** NOTA: Você precisará adicionar o método correspondente no EstoqueRepository:
+        // Optional<Estoque> findByProdutoIdAndLoteId(Integer idProduto, Integer idLote);
+        Optional<Estoque> estoque = estoqueRepository.findByProdutoIdAndLoteId(idProduto, idLote);
+        
+        long endTime = System.currentTimeMillis();
+        log.info("Busca de estoque por Produto/Lote executada em {}ms", endTime - startTime);
+        
+        return estoque;
+    }
+    
+    /**
      * Busca todos os estoques com paginação otimizada
      * @param page Número da página (0-based)
      * @param size Tamanho da página (máximo 100)

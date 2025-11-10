@@ -13,25 +13,20 @@ public class Lote {
     @Column(name = "IDLOTE")
     private Integer id;
 
-    @Column(name = "DATAVENC")
-    private LocalDate dataVencimento;
-
-    @Column(name = "QNTD")
+    @Column(name = "QNTD", nullable = false)
     private int quantidade;
 
-    @ManyToOne
-    @JoinColumn(name = "ID_ORDCOMP")
+    @Column(name = "DATAVENC", nullable = false)
+    private LocalDate dataVencimento;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_ORDCOMP", nullable = false)
     private OrdemCompra ordemCompra;
 
     public Lote() {
     }
 
-    public Lote(Integer id, LocalDate dataVencimento, int quantidade, OrdemCompra ordemCompra) {
-        this.id = id;
-        this.dataVencimento = dataVencimento;
-        this.quantidade = quantidade;
-        this.ordemCompra = ordemCompra;
-    }
+    // --- Getters e Setters ---
 
     public Integer getId() {
         return id;
@@ -41,12 +36,12 @@ public class Lote {
         this.id = id;
     }
 
-    public LocalDate getDataVencimento() {
-        return dataVencimento;
+    public OrdemCompra getOrdemCompra() {
+        return ordemCompra;
     }
 
-    public void setDataVencimento(LocalDate dataVencimento) {
-        this.dataVencimento = dataVencimento;
+    public void setOrdemCompra(OrdemCompra ordemCompra) {
+        this.ordemCompra = ordemCompra;
     }
 
     public int getQuantidade() {
@@ -57,12 +52,12 @@ public class Lote {
         this.quantidade = quantidade;
     }
 
-    public OrdemCompra getOrdemCompra() {
-        return ordemCompra;
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
     }
 
-    public void setOrdemCompra(OrdemCompra ordemCompra) {
-        this.ordemCompra = ordemCompra;
+    public void setDataVencimento(LocalDate dataVencimento) {
+        this.dataVencimento = dataVencimento;
     }
 
     @Override
@@ -77,14 +72,5 @@ public class Lote {
     public int hashCode() {
         return Objects.hash(id);
     }
-
-    @Override
-    public String toString() {
-        return "Lote{" +
-                "id=" + id +
-                ", dataVencimento=" + dataVencimento +
-                ", quantidade=" + quantidade +
-                ", ordemCompraId=" + (ordemCompra != null ? ordemCompra.getId() : "null") +
-                '}';
-    }
+    
 }

@@ -16,7 +16,6 @@ import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Future;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -51,7 +50,6 @@ public class ItemOrdemCompra {
     private BigDecimal valor;
 
     @NotNull(message = "A data de vencimento é obrigatória.")
-    @Future(message = "A data de vencimento deve ser no futuro.")
     @Column(name = "DATAVENC", nullable = false)
     private LocalDate dataVencimento;
 

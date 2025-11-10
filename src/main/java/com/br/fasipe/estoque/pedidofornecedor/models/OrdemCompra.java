@@ -1,12 +1,11 @@
 package com.br.fasipe.estoque.pedidofornecedor.models;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
-
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "ORDEMCOMPRA")
@@ -17,79 +16,102 @@ public class OrdemCompra {
     @Column(name = "IDORDCOMP")
     private Integer id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "STATUSORD", nullable = false)
-    private StatusOrdem status;
-
-    @Column(name = "DATAPREV")
-    private LocalDate dataPrevisao;
-    
-    @Column(name = "DATAORDEM") // <--- CAMPO CRUCIAL ADICIONADO AQUI
+    @Column(name = "DATAORDEM", nullable = false)
     private LocalDate dataOrdem;
 
-    @Column(name = "DATAENTRE")
-    private LocalDate dataEntrega;
-
-    @Column(name = "VALOR")
+    @Column(name = "VALOR") // Mapeia para a coluna VALOR do seu DB
     private BigDecimal valor;
 
-    @OneToMany(mappedBy = "ordemCompra", fetch = FetchType.EAGER) // CORRIGIDO: de LAZY para EAGER
-    @JsonManagedReference
-    private List<ItemOrdemCompra> itens;
+    @Column(name = "STATUSORD") // Coluna no DB: STATUSORD
+    @Enumerated(EnumType.STRING)
+    private StatusOrdemCompra status;
 
-    public enum StatusOrdem {
-        PEND, ANDA, CONC // Mapeia para 'PEND', 'ANDA', 'CONC' no banco
-    }
+    @Column(name = "DATAPREV") // Mapeia para a coluna DATAPREV do seu DB
+    private LocalDate dataprev;
 
+    @Column(name = "DATAENTRE") // Mapeia para a coluna DATAENTRE do seu DB
+    private LocalDate dataEntre;
+
+    // --- Mapeamento para ItemOrdemCompra ---
+    @OneToMany(mappedBy = "ordemCompra", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private Set<ItemOrdemCompra> itens = new HashSet<>();
+    
+    // --- Mapeamento CRUCIAL para Lote (FetchType.EAGER é necessário para a soma em memória) ---
+    @OneToMany(mappedBy = "ordemCompra", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private Set<Lote> lotes = new HashSet<>(); 
+
+    // Construtores
     public OrdemCompra() {
     }
 
-    // Adicione o dataOrdem no construtor se ele for usado.
-    public OrdemCompra(Integer id, StatusOrdem status, LocalDate dataPrevisao, LocalDate dataOrdem, LocalDate dataEntrega, BigDecimal valor, List<ItemOrdemCompra> itens) {
+    // Getters e Setters
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
         this.id = id;
-        this.status = status;
-        this.dataPrevisao = dataPrevisao;
-        this.dataOrdem = dataOrdem; // Adicionado ao construtor
-        this.dataEntrega = dataEntrega;
+    }
+
+    public LocalDate getDataOrdem() {
+        return dataOrdem;
+    }
+
+    public void setDataOrdem(LocalDate dataOrdem) {
+        this.dataOrdem = dataOrdem;
+    }
+
+    public BigDecimal getValor() {
+        return valor;
+    }
+
+    public void setValor(BigDecimal valor) {
         this.valor = valor;
+    }
+
+    public StatusOrdemCompra getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusOrdemCompra status) {
+        this.status = status;
+    }
+
+    public Set<ItemOrdemCompra> getItens() {
+        return itens;
+    }
+
+    public void setItens(Set<ItemOrdemCompra> itens) {
         this.itens = itens;
     }
-
-    // GETTERS e SETTERS adicionados/corrigidos:
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-
-    public StatusOrdem getStatus() { return status; }
-    public void setStatus(StatusOrdem status) { this.status = status; }
-
-    public LocalDate getDataPrevisao() { return dataPrevisao; }
-    public void setDataPrevisao(LocalDate dataPrevisao) { this.dataPrevisao = dataPrevisao; }
-
-    public LocalDate getDataOrdem() { return dataOrdem; } // <--- NOVO GETTER
-    public void setDataOrdem(LocalDate dataOrdem) { this.dataOrdem = dataOrdem; } // <--- NOVO SETTER
-
-    public LocalDate getDataEntrega() { return dataEntrega; }
-    public void setDataEntrega(LocalDate dataEntrega) { this.dataEntrega = dataEntrega; }
-
-    public BigDecimal getValor() { return valor; }
-    public void setValor(BigDecimal valor) { this.valor = valor; }
-
-    public List<ItemOrdemCompra> getItens() { return itens; }
-    public void setItens(List<ItemOrdemCompra> itens) { this.itens = itens; }
     
-    // Mantenha equals, hashcode e toString
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OrdemCompra that = (OrdemCompra) o;
-        return Objects.equals(id, that.id);
+    public Set<Lote> getLotes() { 
+        return lotes;
     }
 
-    @Override public int hashCode() { return Objects.hash(id); }
+    public void setLotes(Set<Lote> lotes) {
+        this.lotes = lotes;
+    }
 
-    @Override
-    public String toString() {
-        return "OrdemCompra{" + "id=" + id + ", status=" + status + ", dataOrdem=" + dataOrdem + ", valor=" + valor + '}';
+    public LocalDate getDataprev() {
+        return dataprev;
+    }
+
+    public void setDataprev(LocalDate dataprev) {
+        this.dataprev = dataprev;
+    }
+
+    public LocalDate getDataEntre() {
+        return dataEntre;
+    }
+
+    public void setDataEntre(LocalDate dataEntre) {
+        this.dataEntre = dataEntre;
+    }
+
+    // Métodos utilitários
+    public void adicionarItem(ItemOrdemCompra item) {
+        this.itens.add(item);
+        item.setOrdemCompra(this);
     }
 }

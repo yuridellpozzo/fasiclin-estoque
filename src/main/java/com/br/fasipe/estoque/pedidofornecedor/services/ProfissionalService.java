@@ -13,25 +13,29 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional(readOnly = true) // Transação 'readOnly' na classe (Resolve o erro de dupla anotação)
 public class ProfissionalService {
 
+    // CORREÇÃO: A declaração do Logger fica fora do método e é static final
     private static final Logger log = LoggerFactory.getLogger(ProfissionalService.class);
 
     @Autowired
     private ProfissionalRepository profissionalRepository;
-    @Transactional(readOnly = true)
+
+    // Removida a anotação @Transactional duplicada aqui, pois já está na classe
     public List<ProfissionalDto> findAdminProfissional() {
         
+        // Buscamos o profissional com ID 1
         Optional<Profissional> adminOpt = profissionalRepository.findById(1);
 
         log.info("Buscando profissional administrador com ID 1");
+        
         if (adminOpt.isPresent()) {
             Profissional admin = adminOpt.get();
             ProfissionalDto dto = new ProfissionalDto();
-            dto.setId(admin.getId()); // Usa getId() do Profissional
+            dto.setId(admin.getId());
             
-            // Usa getPessoaFis() e getNomePessoa() (Corrigido para evitar erro de símbolo)
+            // CORRIGIDO: Usa getNome() da PessoaFis. (Assumindo que você ajustou o getter)
             dto.setNomePessoa(admin.getPessoaFis().getNome()); 
 
             return Collections.singletonList(dto); 

@@ -3,8 +3,10 @@ package com.br.fasipe.estoque.pedidofornecedor.services;
 import com.br.fasipe.estoque.pedidofornecedor.dto.LoteRecebidoDetalheDto;
 import com.br.fasipe.estoque.pedidofornecedor.dto.RecebimentoPedidoDto;
 import com.br.fasipe.estoque.pedidofornecedor.models.*;
-import com.br.fasipe.estoque.pedidofornecedor.models.OrdemCompra.StatusOrdem;
 import com.br.fasipe.estoque.pedidofornecedor.repository.*;
+import com.br.fasipe.estoque.pedidofornecedor.models.ItemOrdemCompra;
+import com.br.fasipe.estoque.pedidofornecedor.models.OrdemCompra;
+import com.br.fasipe.estoque.pedidofornecedor.models.StatusOrdemCompra;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,13 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDate;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+
 import java.util.List;
-
-
+import java.util.Optional; 
 
 @Service
 public class OrdemCompraService {
@@ -33,8 +36,14 @@ public class OrdemCompraService {
     @Autowired private ProfissionalRepository profissionalRepository;
     @Autowired private ProdutoRepository produtoRepository;
     @Autowired private ItemOrdemCompraRepository itemOrdemCompraRepository;
+    
+    @Autowired private EntityManager entityManager; // Para limpeza de cache/contexto JPA
 
 
+    /**
+     * SOLUÇÃO DE CONTORNO FUNCIONAL (Mínimo): O campo QNTD do ItemOrdemCompra é sobrescrito 
+     * com o total recebido acumulado, perdendo a quantidade pedida original.
+     */
     @Transactional
     public String receberPedido(RecebimentoPedidoDto dto) {
         
@@ -46,15 +55,19 @@ public class OrdemCompraService {
         Profissional profissional = profissionalRepository.findById(usuario.getProfissional().getId())
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado para o usuário."));
 
-        if (!profissional.getId().equals(1)) {
-            throw new RuntimeException("Somente o profissional administrador (ID 1) pode realizar esta operação.");
+        // >>> VALIDAÇÃO CORRIGIDA: Checa se o TIPOPROFI é igual à string "1" <<<
+        // Se tipoProfi é String, a comparação deve ser feita com String.
+        if (profissional.getTipoProfi() == null || !profissional.getTipoProfi().equals("1")) {
+            throw new RuntimeException("Somente o profissional administrador pode realizar esta operação.");
         }
-        
+        // <<< FIM DA VALIDAÇÃO CORRIGIDA >>>
+
+
         // --- 2. VALIDAÇÃO DA ORDEM DE COMPRA ---
         OrdemCompra ordemCompra = ordemCompraRepository.findById(dto.getIdOrdemCompra())
                 .orElseThrow(() -> new RuntimeException("Ordem de compra não encontrada."));
 
-        if (ordemCompra.getStatus().equals(StatusOrdem.CONC)) {
+        if (ordemCompra.getStatus().equals(StatusOrdemCompra.CONC)) {
             throw new RuntimeException("A ordem de compra já foi concluída.");
         }
 
@@ -65,50 +78,65 @@ public class OrdemCompraService {
             Produto produto = produtoRepository.findById(itemRecebido.getIdProduto())
                     .orElseThrow(() -> new RuntimeException("Produto ID " + itemRecebido.getIdProduto() + " não encontrado."));
 
-            // ATUALIZA A QUANTIDADE RECEBIDA NO ItemOrdemCompra
+            // BUSCA O ItemOrdemCompra
             ItemOrdemCompra itemDaOrdem = ordemCompra.getItens().stream()
                     .filter(item -> item.getProduto().getId().equals(produto.getId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Item com produto ID " + itemRecebido.getIdProduto() + " não encontrado na Ordem de Compra."));
             
-            int novaQuantidadeRecebida = itemDaOrdem.getQuantidade() + itemRecebido.getQuantidadeRecebida();
-            itemDaOrdem.setQuantidade(novaQuantidadeRecebida);
+            
+            // LÓGICA DE CONTORNO: O campo 'quantidade' (QNTD) é tratado como QNTD Recebida Acumulada.
+            int quantidadeRecebidaNoLote = itemRecebido.getQuantidadeRecebida();
+            int quantidadeAcumuladaAnterior = itemDaOrdem.getQuantidade();
+            int novaQuantidadeRecebidaAcumulada = quantidadeAcumuladaAnterior + quantidadeRecebidaNoLote; 
+            
+            // ATUALIZA A QNTD (SOBRESCRITA)
+            itemDaOrdem.setQuantidade(novaQuantidadeRecebidaAcumulada); 
             itemOrdemCompraRepository.save(itemDaOrdem);
-
-
-            // CRIAÇÃO DO LOTE (O campo Produto é removido, pois não existe na tabela LOTE)
+            
+            // CRIAÇÃO DO LOTE
             Lote lote = new Lote();
             lote.setDataVencimento(itemRecebido.getDataVencimento());
-            lote.setQuantidade(itemRecebido.getQuantidadeRecebida()); 
+            lote.setQuantidade(quantidadeRecebidaNoLote); 
             lote.setOrdemCompra(ordemCompra);
             lote = loteRepository.save(lote); 
+            
+            // Limpeza de Cache
+            entityManager.flush();
+            entityManager.clear();
 
-            // BUSCA/SOMA ESTOQUE
-            Estoque estoque = estoqueRepository.findByProdutoId(produto.getId()) 
-                    .orElse(new Estoque()); 
+            // 4. BUSCA/SOMA ESTOQUE POR PRODUTO E LOTE
+            Optional<Estoque> estoqueOpt = estoqueRepository.findByProdutoIdAndLoteId(produto.getId(), lote.getId()); 
 
-            if (estoque.getId() == null) { 
-                estoque.setProduto(produto);
-                estoque.setLote(lote); 
-                estoque.setQuantidadeEstoque(itemRecebido.getQuantidadeRecebida()); 
+            if (estoqueOpt.isEmpty()) { 
+                Estoque novoEstoque = new Estoque();
+                novoEstoque.setProduto(produto);
+                novoEstoque.setLote(lote); 
+                novoEstoque.setQuantidadeEstoque(quantidadeRecebidaNoLote); 
+                estoqueRepository.save(novoEstoque);
             } else { 
-                estoque.setProduto(produto); 
-                estoque.setQuantidadeEstoque(estoque.getQuantidadeEstoque() + itemRecebido.getQuantidadeRecebida());
-                estoque.setLote(lote); 
+                Estoque estoqueExistente = estoqueOpt.get();
+                estoqueExistente.setQuantidadeEstoque(estoqueExistente.getQuantidadeEstoque() + quantidadeRecebidaNoLote);
+                estoqueRepository.save(estoqueExistente);
             }
-            estoqueRepository.save(estoque);
+            
+            // 5. ATUALIZA O STATUS PARA EM ANDAMENTO
+            if (ordemCompra.getStatus() == StatusOrdemCompra.PEND) {
+                ordemCompra.setStatus(StatusOrdemCompra.ANDA);
+            }
         }
         
-        // --- 4. ATUALIZA STATUS DA OC PARA 'EM ANDAMENTO' (RECEBIMENTO PARCIAL) ---
-        if (ordemCompra.getStatus() == StatusOrdem.PEND) {
-            ordemCompra.setStatus(StatusOrdem.ANDA);
-            ordemCompraRepository.save(ordemCompra);
-        }
+        // --- 6. ATUALIZAÇÃO FINAL DO STATUS DA ORDEM DE COMPRA ---
+        ordemCompraRepository.save(ordemCompra);
         
-        // O método findByStatus não é mais chamado para evitar a L.I.E.
-        // O front-end recarrega os dados.
-        return "Itens recebidos com sucesso! A Ordem de Compra está 'Em Andamento'.";
+        String mensagem = ordemCompra.getStatus().equals(StatusOrdemCompra.CONC) 
+                         ? "Itens recebidos com sucesso! Ordem de Compra CONCLUÍDA."
+                         : "Itens recebidos com sucesso! A Ordem de Compra está 'Em Andamento'.";
+                         
+        return mensagem;
     }
+    
+    // MÉTODOS DE BUSCA (Corrigidos para Compilação)
 
     @Transactional
     public void concluirOrdemManualmente(Integer idOrdemCompra) {
@@ -117,26 +145,23 @@ public class OrdemCompraService {
                 .orElseThrow(() -> new RuntimeException("Ordem de compra não encontrada."));
 
         // 2. Validação: Só pode ser concluída se estiver PENDENTE ou EM ANDAMENTO
-        if (ordemCompra.getStatus() == StatusOrdem.CONC) {
+        if (ordemCompra.getStatus().equals(StatusOrdemCompra.CONC)) {
             throw new RuntimeException("Esta ordem já está concluída.");
         }
 
         // 3. Conclusão Final
-        ordemCompra.setStatus(StatusOrdem.CONC);
-        ordemCompra.setDataEntrega(LocalDate.now());
+        ordemCompra.setStatus(StatusOrdemCompra.CONC);
         ordemCompraRepository.save(ordemCompra);
         log.info("Ordem de Compra #{} concluída manualmente.", idOrdemCompra);
     }
 
 
-    // MÉTODOS DE BUSCA (Mantidos para funcionalidade do front-end)
-
-    @Transactional(readOnly = true) // <-- Adicionei a transação que estava faltando
+    @Transactional(readOnly = true) 
     public List<ItemOrdemCompra> getItensDaOrdem(Integer idOrdemCompra) {
         ordemCompraRepository.findById(idOrdemCompra)
-            .orElseThrow(() -> new RuntimeException("Ordem de compra não encontrada."));
+            .orElseThrow(() -> new EntityNotFoundException("Ordem de compra não encontrada."));
 
-        return itemOrdemCompraRepository.findByOrdemCompraId(idOrdemCompra);
+        return itemOrdemCompraRepository.findByOrdemCompraId(idOrdemCompra); 
     }
     
     public Page<OrdemCompra> findAll(int page, int size) {
@@ -144,7 +169,7 @@ public class OrdemCompraService {
         return ordemCompraRepository.findAll(pageable);
     }
 
-    public Page<OrdemCompra> findByStatus(StatusOrdem status, int page, int size) {
+    public Page<OrdemCompra> findByStatus(StatusOrdemCompra status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ordemCompraRepository.findByStatus(status, pageable);
     }

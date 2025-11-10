@@ -16,6 +16,9 @@ public class Profissional {
     @JoinColumn(name = "ID_PESSOAFIS")
     private PessoaFis pessoaFis;
 
+    @Column(name = "TIPOPROFI") // Mapeia para a coluna ENUM do BD
+    private String tipoProfi; // Usamos String para mapear o ENUM '1', '2', etc.
+
     public Profissional() {
     }
 
@@ -38,6 +41,14 @@ public class Profissional {
 
     public void setPessoaFis(PessoaFis pessoaFis) {
         this.pessoaFis = pessoaFis;
+    }
+
+    public String getTipoProfi() {
+        return tipoProfi;
+    }
+
+    public void setTipoProfi(String tipoProfi) {
+        this.tipoProfi = tipoProfi;
     }
 
     @Override

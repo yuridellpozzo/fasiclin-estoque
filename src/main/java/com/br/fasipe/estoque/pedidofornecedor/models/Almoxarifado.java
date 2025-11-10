@@ -8,9 +8,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.util.Objects;
 
 @Entity
@@ -23,19 +20,19 @@ public class Almoxarifado {
     @Column(name = "IDALMOX")
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "ID_SETOR")
-    private Setor setor;
 
     @Column(name = "NOMEALMO", nullable = false, unique = true, length = 100)
     private String nome;
 
+    @Column(name = "ID_SETOR") // Use o nome real da coluna FK no DB (ex: ID_SETOR, IDSETOR)
+    private Integer setorId;
+
     public Almoxarifado() {
     }
 
-    public Almoxarifado(Integer id, Setor setor, String nome) {
+    public Almoxarifado(Integer id, String nome) {
         this.id = id;
-        this.setor = setor;
+
         this.nome = nome;
     }
 
@@ -47,20 +44,20 @@ public class Almoxarifado {
         this.id = id;
     }
 
-    public Setor getSetor() {
-        return setor;
-    }
-
-    public void setSetor(Setor setor) {
-        this.setor = setor;
-    }
-
     public String getNome() {
         return nome;
     }
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public Integer getSetorId() {
+        return setorId;
+    }
+
+    public void setSetorId(Integer setorId) {
+        this.setorId = setorId;
     }
 
     @Override

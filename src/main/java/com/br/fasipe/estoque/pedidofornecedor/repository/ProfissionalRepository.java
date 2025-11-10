@@ -2,13 +2,12 @@ package com.br.fasipe.estoque.pedidofornecedor.repository;
 
 import com.br.fasipe.estoque.pedidofornecedor.models.Profissional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 // Removemos a importação de java.util.Optional pois o método não é mais declarado aqui.
 
 public interface ProfissionalRepository extends JpaRepository<Profissional, Integer> {
 
-    // O método findById(Integer id) NÃO ESTÁ MAIS AQUI! Ele é herdado.
-
-    // Remova qualquer outro método de busca por Setor que possa ter restado.
+    List<Profissional> findByTipoProfi(String tipoProfi);
     // Opcional: Se quiser um método customizado, crie-o aqui.
 }

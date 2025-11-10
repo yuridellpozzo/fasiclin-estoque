@@ -91,6 +91,8 @@ public class AlmoxarifadoService extends BaseService {
         long startTime = System.currentTimeMillis();
         log.info("Buscando almoxarifado por nome: {}", nome);
         
+        // CORREÇÃO: O método findById espera um Integer. O correto é usar um método
+        // que busca pelo nome, como findByNome(String nome).
         Optional<Almoxarifado> almoxarifado = almoxarifadoRepository.findByNome(nome);
         
         long endTime = System.currentTimeMillis();
@@ -112,6 +114,8 @@ public class AlmoxarifadoService extends BaseService {
         log.info("Buscando almoxarifados por setor: {}, Página: {}", idSetor, page);
         
         Pageable pageable = createDefaultPageable(page, size);
+        // CORREÇÃO: O método findBySetorId precisa existir no AlmoxarifadoRepository.
+        // Adicionaremos este método no repositório para corrigir o erro de inicialização.
         Page<Almoxarifado> almoxarifados = almoxarifadoRepository.findBySetorId(idSetor, pageable);
         
         logPerformanceInfo("Almoxarifados por Setor", almoxarifados, startTime);
@@ -209,6 +213,8 @@ public class AlmoxarifadoService extends BaseService {
      */
     @Cacheable(value = "almoxarifado", key = "'exists_nome_' + #nome")
     public boolean existsByNome(String nome) {
+        // CORREÇÃO: O método findAll(nome) não existe. A forma correta é usar
+        // o método de busca por nome e verificar se o Optional retornado tem um valor.
         return almoxarifadoRepository.findByNome(nome).isPresent();
     }
 

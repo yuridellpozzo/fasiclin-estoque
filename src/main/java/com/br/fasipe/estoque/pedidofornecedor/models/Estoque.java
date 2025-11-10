@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "ESTOQUE")
+@Table(name = "ESTOQUE", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"ID_PRODUTO", "ID_LOTE"}, name = "UK_PRODUTO_LOTE")
+})
 public class Estoque {
 
     @Id
@@ -16,6 +18,7 @@ public class Estoque {
     @JoinColumn(name = "ID_PRODUTO", nullable = false)
     private Produto produto;
 
+    // Agora, o Estoque é rastreado por Lote (data de validade, etc.)
     @ManyToOne
     @JoinColumn(name = "ID_LOTE", nullable = false)
     private Lote lote;
@@ -32,6 +35,8 @@ public class Estoque {
         this.lote = lote;
         this.quantidadeEstoque = quantidadeEstoque;
     }
+
+    // --- Getters e Setters ---
 
     public Integer getId() {
         return id;
@@ -64,6 +69,12 @@ public class Estoque {
     public void setQuantidadeEstoque(int quantidadeEstoque) {
         this.quantidadeEstoque = quantidadeEstoque;
     }
+
+    // --- Equals, HashCode e ToString ---
+    
+    // ATENÇÃO: É recomendado usar ID_PRODUTO e ID_LOTE no equals/hashCode
+    // se o ID for nulo (entidade nova), mas por simplicidade e uso de DB ID
+    // mantemos o IDESTOQUE como chave.
 
     @Override
     public boolean equals(Object o) {

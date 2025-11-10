@@ -1,9 +1,9 @@
 package com.br.fasipe.estoque.pedidofornecedor.controllers;
 
+import com.br.fasipe.estoque.pedidofornecedor.models.StatusOrdemCompra;
 import com.br.fasipe.estoque.pedidofornecedor.dto.RecebimentoPedidoDto;
 import com.br.fasipe.estoque.pedidofornecedor.models.ItemOrdemCompra;
 import com.br.fasipe.estoque.pedidofornecedor.models.OrdemCompra;
-import com.br.fasipe.estoque.pedidofornecedor.models.OrdemCompra.StatusOrdem;
 import com.br.fasipe.estoque.pedidofornecedor.services.OrdemCompraService;
 import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +87,7 @@ public class OrdemCompraController {
             }
 
             // Converte a String (ex: "CONC") para o Enum StatusOrdem
-            StatusOrdem statusEnum = StatusOrdem.valueOf(status.toUpperCase());
+            StatusOrdemCompra statusEnum = StatusOrdemCompra.valueOf(status.toUpperCase());
             Page<OrdemCompra> ordens = ordemCompraService.findByStatus(statusEnum, page, size);
             
             // Valida se a página não está vazia.

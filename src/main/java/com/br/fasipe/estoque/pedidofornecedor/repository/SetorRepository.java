@@ -2,13 +2,14 @@ package com.br.fasipe.estoque.pedidofornecedor.repository;
 
 import com.br.fasipe.estoque.pedidofornecedor.models.Setor;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.List;
 import java.util.Optional;
 
+/**
+ * Interface Repository para Setor com métodos mínimos necessários pelo SetorService
+ */
 public interface SetorRepository extends JpaRepository<Setor, Integer> {
-    // Agora o método retorna uma lista de setores, pois um profissional pode estar em vários.
-    List<Setor> findByProfissionalId(Integer id);
-
+    
     Optional<Setor> findByNome(String nome);
+    
     boolean existsByNome(String nome);
 }

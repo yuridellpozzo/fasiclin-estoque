@@ -1,5 +1,3 @@
-// src/main/java/com/br/fasipe/estoque/pedidofornecedor/repository/ItemOrdemCompraRepository.java
-
 package com.br.fasipe.estoque.pedidofornecedor.repository;
 
 import com.br.fasipe.estoque.pedidofornecedor.models.ItemOrdemCompra;
