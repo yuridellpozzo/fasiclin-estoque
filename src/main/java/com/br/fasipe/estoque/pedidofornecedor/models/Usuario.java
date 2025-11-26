@@ -22,14 +22,21 @@ public class Usuario {
     @JoinColumn(name = "ID_PROFISSIO")
     private Profissional profissional;
 
+    // --- NOVO MAPEAMENTO (Conforme diagrama do banco) ---
+    @OneToOne
+    @JoinColumn(name = "ID_DOCUMENTO")
+    private Documento documento;
+    // ----------------------------------------------------
+
     public Usuario() {
     }
 
-    public Usuario(Integer id, String login, String senha, Profissional profissional) {
+    public Usuario(Integer id, String login, String senha, Profissional profissional, Documento documento) {
         this.id = id;
         this.login = login;
         this.senha = senha;
         this.profissional = profissional;
+        this.documento = documento;
     }
 
     public Integer getId() {
@@ -62,6 +69,14 @@ public class Usuario {
 
     public void setProfissional(Profissional profissional) {
         this.profissional = profissional;
+    }
+
+    public Documento getDocumento() {
+        return documento;
+    }
+
+    public void setDocumento(Documento documento) {
+        this.documento = documento;
     }
 
     @Override

@@ -1,50 +1,43 @@
 package com.br.fasipe.estoque.pedidofornecedor.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import java.util.Objects;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PESSOAFIS")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Table(name = "PESSOAFIS") // Nome exato da tabela conforme sua imagem
 public class PessoaFis {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "IDPESSOAFIS")
     private Integer id;
 
-    @Column(name = "ID_PESSOA", unique = true)
-    private Integer idPessoa;
+    // --- CAMPOS REMOVIDOS (Causavam o erro) ---
+    // private String nomePessoa; 
+    // private String cpfPessoa;
+    // ------------------------------------------
 
-    @Column(name = "CPFPESSOA", nullable = false, unique = true, length = 11)
-    private String cpf;
+    // --- NOVOS MAPEAMENTOS (Conforme sua imagem) ---
 
-    @Column(name = "NOMEPESSOA", nullable = false, length = 100)
-    private String nome;
+    @Column(name = "ID_PESSOA")
+    private Integer idPessoa; // FK para a tabela PESSOA (onde provavelmente está o nome agora)
 
-    // Outros campos como DATANASCPES, SEXOPESSOA, etc. podem ser adicionados aqui.
+    @Column(name = "SEXOPESSOA")
+    private String sexoPessoa;
 
-    public PessoaFis() {
-    }
+    @Column(name = "DATACRIACAO")
+    private LocalDateTime dataCriacao; // ou LocalDate, dependendo do DB
 
-    public PessoaFis(Integer id, Integer idPessoa, String cpf, String nome) { // Corrigido o construtor
-        this.id = id;
-        this.idPessoa = idPessoa;
-        this.cpf = cpf;
-        this.nome = nome;
-    }
+    @Column(name = "ID_DOCUMENTO")
+    private String idDocumento; // FK para a tabela DOCUMENTO
 
-    public Integer getId() { // Renomeado de getIdPessoaFis para getId para consistência
+    // --- GETTERS E SETTERS ---
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) { // Renomeado de setIdPessoaFis para setId
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -56,40 +49,27 @@ public class PessoaFis {
         this.idPessoa = idPessoa;
     }
 
-    public String getCpf() {
-        return cpf;
+    public String getSexoPessoa() {
+        return sexoPessoa;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
+    public void setSexoPessoa(String sexoPessoa) {
+        this.sexoPessoa = sexoPessoa;
     }
 
-    public String getNome() {
-        return nome;
+    public LocalDateTime getDataCriacao() {
+        return dataCriacao;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setDataCriacao(LocalDateTime dataCriacao) {
+        this.dataCriacao = dataCriacao;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PessoaFis that = (PessoaFis) o;
-        return Objects.equals(id, that.id);
+    public String getIdDocumento() {
+        return idDocumento;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "PessoaFis{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                '}';
+    public void setIdDocumento(String idDocumento) {
+        this.idDocumento = idDocumento;
     }
 }

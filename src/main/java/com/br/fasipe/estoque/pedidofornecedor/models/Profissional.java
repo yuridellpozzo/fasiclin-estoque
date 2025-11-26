@@ -12,19 +12,22 @@ public class Profissional {
     @Column(name = "IDPROFISSIO")
     private Integer id;
 
+    // --- CAMPO ADICIONADO: ID_DOCUMENTO agora existe na tabela ---
+    // Mapeia para a entidade Documento através da coluna ID_DOCUMENTO
     @OneToOne
-    @JoinColumn(name = "ID_PESSOAFIS")
-    private PessoaFis pessoaFis;
+    @JoinColumn(name = "ID_DOCUMENTO")
+    private Documento documento;
+    // -------------------------------------------------------------
 
-    @Column(name = "TIPOPROFI") // Mapeia para a coluna ENUM do BD
-    private String tipoProfi; // Usamos String para mapear o ENUM '1', '2', etc.
+    @Column(name = "TIPOPROFI") // Mapeia para a coluna ENUM/VARCHAR do BD
+    private String tipoProfi; // Usamos String para mapear '1', '2', etc.
 
     public Profissional() {
     }
 
-    public Profissional(Integer id, PessoaFis pessoaFis) {
+    public Profissional(Integer id, String tipoProfi) {
         this.id = id;
-        this.pessoaFis = pessoaFis;
+        this.tipoProfi = tipoProfi;
     }
 
     public Integer getId() {
@@ -35,12 +38,12 @@ public class Profissional {
         this.id = id;
     }
 
-    public PessoaFis getPessoaFis() {
-        return pessoaFis;
+    public Documento getDocumento() {
+        return documento;
     }
 
-    public void setPessoaFis(PessoaFis pessoaFis) {
-        this.pessoaFis = pessoaFis;
+    public void setDocumento(Documento documento) {
+        this.documento = documento;
     }
 
     public String getTipoProfi() {
@@ -68,7 +71,8 @@ public class Profissional {
     public String toString() {
         return "Profissional{" +
                 "id=" + id +
-                ", pessoaFisId=" + (pessoaFis != null ? pessoaFis.getId() : "null") +
+                ", documento=" + (documento != null ? documento.getIdDocumento() : "null") +
+                ", tipoProfi='" + tipoProfi + '\'' +
                 '}';
     }
 }

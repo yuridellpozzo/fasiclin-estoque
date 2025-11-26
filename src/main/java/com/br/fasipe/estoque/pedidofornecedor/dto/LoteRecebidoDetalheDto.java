@@ -1,23 +1,16 @@
 package com.br.fasipe.estoque.pedidofornecedor.dto;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
-/**
- * DTO para receber os detalhes de um item específico (lote) que está sendo recebido.
- */
 public class LoteRecebidoDetalheDto {
     private Integer idProduto;
     private int quantidadeRecebida;
     private LocalDate dataVencimento;
+    
+    // Campo para receber o nome do lote da tela
+    private String numeroLote; 
 
     public LoteRecebidoDetalheDto() {
-    }
-
-    public LoteRecebidoDetalheDto(Integer idProduto, int quantidadeRecebida, LocalDate dataVencimento) {
-        this.idProduto = idProduto;
-        this.quantidadeRecebida = quantidadeRecebida;
-        this.dataVencimento = dataVencimento;
     }
 
     public Integer getIdProduto() {
@@ -44,25 +37,11 @@ public class LoteRecebidoDetalheDto {
         this.dataVencimento = dataVencimento;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        LoteRecebidoDetalheDto that = (LoteRecebidoDetalheDto) o;
-        return quantidadeRecebida == that.quantidadeRecebida && Objects.equals(idProduto, that.idProduto) && Objects.equals(dataVencimento, that.dataVencimento);
+    public String getNumeroLote() {
+        return numeroLote;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(idProduto, quantidadeRecebida, dataVencimento);
-    }
-
-    @Override
-    public String toString() {
-        return "LoteRecebidoDetalheDto{" +
-                "idProduto=" + idProduto +
-                ", quantidadeRecebida=" + quantidadeRecebida +
-                ", dataVencimento=" + dataVencimento +
-                '}';
+    public void setNumeroLote(String numeroLote) {
+        this.numeroLote = numeroLote;
     }
 }
