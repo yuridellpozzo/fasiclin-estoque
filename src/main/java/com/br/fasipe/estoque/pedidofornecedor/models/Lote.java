@@ -15,6 +15,14 @@ public class Lote {
     @Column(name = "DATAVENC")
     private LocalDate dataVencimento;
 
+    // Coluna obrigatória conforme o print
+    @Column(name = "DATA_VALIDADE")
+    private LocalDate dataValidade;
+
+    // Coluna obrigatória conforme o print
+    @Column(name = "DATA_FABRICACAO")
+    private LocalDate dataFabricacao;
+
     @Column(name = "QNTD")
     private Integer quantidade;
 
@@ -22,63 +30,43 @@ public class Lote {
     @JoinColumn(name = "ID_ORDCOMP")
     private OrdemCompra ordemCompra;
 
-    // Campo obrigatório para vincular ao Item
     @Column(name = "IDITEM") 
     private Integer idItem;
 
-    // --- CORREÇÃO: Campo Obrigatório NOME_LOTE ---
     @Column(name = "NOME_LOTE")
     private String nomeLote;
-    // ---------------------------------------------
+
+    // Coluna opcional (não marcada como Not Null no print), mas mapeada
+    @Column(name = "OBSERVACAO")
+    private String observacao;
 
     public Lote() {
     }
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public LocalDate getDataVencimento() { return dataVencimento; }
+    public void setDataVencimento(LocalDate dataVencimento) { this.dataVencimento = dataVencimento; }
 
-    public LocalDate getDataVencimento() {
-        return dataVencimento;
-    }
+    public LocalDate getDataValidade() { return dataValidade; }
+    public void setDataValidade(LocalDate dataValidade) { this.dataValidade = dataValidade; }
 
-    public void setDataVencimento(LocalDate dataVencimento) {
-        this.dataVencimento = dataVencimento;
-    }
+    public LocalDate getDataFabricacao() { return dataFabricacao; }
+    public void setDataFabricacao(LocalDate dataFabricacao) { this.dataFabricacao = dataFabricacao; }
 
-    public Integer getQuantidade() {
-        return quantidade;
-    }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
 
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
-    }
+    public OrdemCompra getOrdemCompra() { return ordemCompra; }
+    public void setOrdemCompra(OrdemCompra ordemCompra) { this.ordemCompra = ordemCompra; }
 
-    public OrdemCompra getOrdemCompra() {
-        return ordemCompra;
-    }
+    public Integer getIdItem() { return idItem; }
+    public void setIdItem(Integer idItem) { this.idItem = idItem; }
 
-    public void setOrdemCompra(OrdemCompra ordemCompra) {
-        this.ordemCompra = ordemCompra;
-    }
+    public String getNomeLote() { return nomeLote; }
+    public void setNomeLote(String nomeLote) { this.nomeLote = nomeLote; }
 
-    public Integer getIdItem() {
-        return idItem;
-    }
-
-    public void setIdItem(Integer idItem) {
-        this.idItem = idItem;
-    }
-
-    public String getNomeLote() {
-        return nomeLote;
-    }
-
-    public void setNomeLote(String nomeLote) {
-        this.nomeLote = nomeLote;
-    }
+    public String getObservacao() { return observacao; }
+    public void setObservacao(String observacao) { this.observacao = observacao; }
 }

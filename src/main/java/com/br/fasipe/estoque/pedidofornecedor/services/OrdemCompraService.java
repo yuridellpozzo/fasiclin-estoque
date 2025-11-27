@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional; 
 
@@ -52,8 +53,8 @@ public class OrdemCompraService {
         Profissional profissional = profissionalRepository.findById(usuario.getProfissional().getId())
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado para o usuário."));
 
-        // Validação de Permissão: Administrador (Tipo "1")
-        // Importante: Compara como String, pois o campo no banco é VARCHAR/ENUM mapeado como String
+        // Validação: Verifica se o tipo do profissional é "1" (Administrador)
+        // Importante: Compara como String
         if (profissional.getTipoProfi() == null || !profissional.getTipoProfi().equals("1")) {
             throw new RuntimeException("Somente o profissional administrador pode realizar esta operação.");
         }
@@ -80,7 +81,7 @@ public class OrdemCompraService {
             
             // Lógica de Acúmulo: Atualiza a quantidade recebida diretamente no item
             int quantidadeRecebidaNoLote = itemRecebido.getQuantidadeRecebida();
-            int quantidadeAcumuladaAnterior = itemDaOrdem.getQuantidade(); // Valor atual no banco (recebido até agora)
+            int quantidadeAcumuladaAnterior = itemDaOrdem.getQuantidade(); // Valor atual no banco
             int novaQuantidadeRecebidaAcumulada = quantidadeAcumuladaAnterior + quantidadeRecebidaNoLote; 
             
             itemDaOrdem.setQuantidade(novaQuantidadeRecebidaAcumulada); 
@@ -92,22 +93,34 @@ public class OrdemCompraService {
             lote.setQuantidade(quantidadeRecebidaNoLote); 
             lote.setOrdemCompra(ordemCompra);
             
-            // >>> PONTO CRÍTICO CORRIGIDO: PREENCHIMENTO DE CAMPOS OBRIGATÓRIOS <<<
+            // --- PREENCHIMENTO DE CAMPOS OBRIGATÓRIOS DO BANCO ---
             
-            // 1. Salva o ID do item no lote para satisfazer a coluna obrigatória 'IDITEM'
+            // 1. IDITEM (Vínculo com o item da ordem)
             lote.setIdItem(itemDaOrdem.getId()); 
             
-            // 2. Salva o Nome do Lote (NOME_LOTE)
-            // Se o DTO tiver o campo, usa ele. Caso contrário, gera um automático.
+            // 2. DATA_VALIDADE (Cópia do vencimento, pois o banco exige)
+            lote.setDataValidade(itemRecebido.getDataVencimento());
+
+            // 3. DATA_FABRICACAO
+            if (itemRecebido.getDataFabricacao() != null) {
+                lote.setDataFabricacao(itemRecebido.getDataFabricacao());
+            } else {
+                lote.setDataFabricacao(LocalDate.now()); // Fallback se o front não enviar
+            }
+
+            // 4. NOME_LOTE
             if (itemRecebido.getNumeroLote() != null && !itemRecebido.getNumeroLote().isEmpty()) {
                 lote.setNomeLote(itemRecebido.getNumeroLote());
             } else {
                 lote.setNomeLote("AUTO-" + System.currentTimeMillis());
             }
             
+            // Opcional: Observação
+            lote.setObservacao("Recebido por ID: " + usuario.getId());
+            
             lote = loteRepository.save(lote); 
             
-            // Limpa cache para garantir que o estoque seja buscado atualizado e evitar conflitos
+            // Limpa cache para garantir que o estoque seja buscado atualizado
             entityManager.flush();
             entityManager.clear();
 
