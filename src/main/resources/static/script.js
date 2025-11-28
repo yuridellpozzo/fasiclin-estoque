@@ -235,7 +235,8 @@ function setupFormHandler() {
             // Constrói a lista de itens pegando os valores dos inputs dinâmicos
             const itensRecebidosList = itensDoPedidoParaEnvio.map(item => {
                 const index = item.index;
-                const qntd = parseInt(document.getElementById(`qntdRecebida-${index}`).value);
+                const qntdInput = document.getElementById(`qntdRecebida-${index}`);
+                const qntd = parseInt(qntdInput.value);
                 const dataVenc = document.getElementById(`dataVencimento-${index}`).value;
                 const dataFab = document.getElementById(`dataFabricacao-${index}`).value; // Leitura nova
                 const codigoLote = document.getElementById(`codigoLote-${index}`).value;
@@ -252,7 +253,8 @@ function setupFormHandler() {
                     dataVencimento: dataVenc,
                     dataFabricacao: dataFab, // Envio para o backend
                     codigoLote: codigoLote,
-                    numeroLote: codigoLote // Mapeado para o DTO
+                    numeroLote: codigoLote, // Mapeado para o DTO
+                    index: index // Guardamos o index para limpar depois
                 };
             }).filter(item => item !== null);
 
@@ -278,7 +280,23 @@ function setupFormHandler() {
 
             if (response.ok) {
                 showAlert(errorText, 'success');
-                loadItensDaOrdem(payload.idOrdemCompra);
+                
+                // --- CORREÇÃO SOLICITADA: Limpar os campos recebidos ---
+                itensRecebidosList.forEach(item => {
+                    const index = item.index;
+                    // Zera ou limpa o input da quantidade recebida
+                    const inputQtd = document.getElementById(`qntdRecebida-${index}`);
+                    if (inputQtd) {
+                        inputQtd.value = ''; // Limpa o valor para indicar que já foi processado
+                        // Opcional: Desabilitar a linha inteira para evitar envio duplicado imediato
+                        // inputQtd.disabled = true;
+                        // document.getElementById(`codigoLote-${index}`).value = '';
+                        // document.getElementById(`dataFabricacao-${index}`).value = '';
+                        // document.getElementById(`dataVencimento-${index}`).value = '';
+                    }
+                });
+                
+                // Recarrega a lista de OCs no dropdown para atualizar status (PEND -> ANDA -> CONC)
                 loadOrdensIniciais();
             } else {
                 showAlert(`Erro ao receber itens: ${errorText}`, 'error');

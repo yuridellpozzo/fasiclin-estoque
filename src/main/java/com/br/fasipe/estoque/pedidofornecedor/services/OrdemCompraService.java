@@ -40,26 +40,23 @@ public class OrdemCompraService {
     @Autowired private EntityManager entityManager;
 
     /**
-     * Processa o recebimento de itens de uma Ordem de Compra.
-     * Cria lotes, atualiza estoque e muda o status da ordem.
+     * Processa o recebimento de itens, abatendo a quantidade pendente.
      */
     @Transactional
     public String receberPedido(RecebimentoPedidoDto dto) {
         
-        // --- 1. Validação de Usuário e Permissão ---
+        // 1. Validação de Usuário
         Usuario usuario = usuarioRepository.findByLoginAndSenha(dto.getLogin(), dto.getSenha())
                 .orElseThrow(() -> new RuntimeException("Usuário ou senha inválidos."));
 
         Profissional profissional = profissionalRepository.findById(usuario.getProfissional().getId())
-                .orElseThrow(() -> new RuntimeException("Profissional não encontrado para o usuário."));
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado."));
 
-        // Validação: Verifica se o tipo do profissional é "1" (Administrador)
-        // Importante: Compara como String
         if (profissional.getTipoProfi() == null || !profissional.getTipoProfi().equals("1")) {
             throw new RuntimeException("Somente o profissional administrador pode realizar esta operação.");
         }
 
-        // --- 2. Validação da Ordem de Compra ---
+        // 2. Validação da Ordem
         OrdemCompra ordemCompra = ordemCompraRepository.findById(dto.getIdOrdemCompra())
                 .orElseThrow(() -> new RuntimeException("Ordem de compra não encontrada."));
 
@@ -67,97 +64,95 @@ public class OrdemCompraService {
             throw new RuntimeException("A ordem de compra já foi concluída.");
         }
 
-        // --- 3. Processamento dos Itens Recebidos ---
+        // 3. Processamento dos Itens
         for (LoteRecebidoDetalheDto itemRecebido : dto.getItensRecebidos()) {
             
             Produto produto = produtoRepository.findById(itemRecebido.getIdProduto())
                     .orElseThrow(() -> new RuntimeException("Produto ID " + itemRecebido.getIdProduto() + " não encontrado."));
 
-            // Busca o item correspondente na OC
             ItemOrdemCompra itemDaOrdem = ordemCompra.getItens().stream()
                     .filter(item -> item.getProduto().getId().equals(produto.getId()))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Item com produto ID " + itemRecebido.getIdProduto() + " não encontrado na Ordem de Compra."));
+                    .orElseThrow(() -> new RuntimeException("Item não encontrado na Ordem de Compra."));
             
-            // Lógica de Acúmulo: Atualiza a quantidade recebida diretamente no item
-            int quantidadeRecebidaNoLote = itemRecebido.getQuantidadeRecebida();
-            int quantidadeAcumuladaAnterior = itemDaOrdem.getQuantidade(); // Valor atual no banco
-            int novaQuantidadeRecebidaAcumulada = quantidadeAcumuladaAnterior + quantidadeRecebidaNoLote; 
+            // --- CORREÇÃO LÓGICA: ABATER QUANTIDADE (Subtração) ---
+            int qtdRecebida = itemRecebido.getQuantidadeRecebida();
+            int qtdPendente = itemDaOrdem.getQuantidade(); // O que falta receber
+
+            if (qtdRecebida > qtdPendente) {
+                throw new RuntimeException("A quantidade recebida (" + qtdRecebida + ") é maior que a pendente (" + qtdPendente + ") para o produto " + produto.getNome());
+            }
+
+            int novaQuantidadePendente = qtdPendente - qtdRecebida; 
             
-            itemDaOrdem.setQuantidade(novaQuantidadeRecebidaAcumulada); 
+            itemDaOrdem.setQuantidade(novaQuantidadePendente); 
             itemOrdemCompraRepository.save(itemDaOrdem);
+            // ------------------------------------------------------
             
-            // Criação do LOTE
+            // Criação do Lote
             Lote lote = new Lote();
             lote.setDataVencimento(itemRecebido.getDataVencimento());
-            lote.setQuantidade(quantidadeRecebidaNoLote); 
+            lote.setQuantidade(qtdRecebida); 
             lote.setOrdemCompra(ordemCompra);
-            
-            // --- PREENCHIMENTO DE CAMPOS OBRIGATÓRIOS DO BANCO ---
-            
-            // 1. IDITEM (Vínculo com o item da ordem)
             lote.setIdItem(itemDaOrdem.getId()); 
             
-            // 2. DATA_VALIDADE (Cópia do vencimento, pois o banco exige)
-            lote.setDataValidade(itemRecebido.getDataVencimento());
+            // Datas e Nome do Lote
+            lote.setDataValidade(itemRecebido.getDataVencimento());   
 
-            // 3. DATA_FABRICACAO
             if (itemRecebido.getDataFabricacao() != null) {
                 lote.setDataFabricacao(itemRecebido.getDataFabricacao());
             } else {
-                lote.setDataFabricacao(LocalDate.now()); // Fallback se o front não enviar
+                lote.setDataFabricacao(LocalDate.now()); 
             }
 
-            // 4. NOME_LOTE
             if (itemRecebido.getNumeroLote() != null && !itemRecebido.getNumeroLote().isEmpty()) {
                 lote.setNomeLote(itemRecebido.getNumeroLote());
             } else {
                 lote.setNomeLote("AUTO-" + System.currentTimeMillis());
             }
             
-            // Opcional: Observação
             lote.setObservacao("Recebido por ID: " + usuario.getId());
             
             lote = loteRepository.save(lote); 
             
-            // Limpa cache para garantir que o estoque seja buscado atualizado
             entityManager.flush();
             entityManager.clear();
 
-            // 4. Atualização de Estoque (Soma ou Cria)
+            // Atualização de Estoque
             Optional<Estoque> estoqueOpt = estoqueRepository.findByProdutoIdAndLoteId(produto.getId(), lote.getId()); 
 
             if (estoqueOpt.isEmpty()) { 
                 Estoque novoEstoque = new Estoque();
                 novoEstoque.setProduto(produto);
                 novoEstoque.setLote(lote); 
-                novoEstoque.setQuantidadeEstoque(quantidadeRecebidaNoLote); 
+                novoEstoque.setQuantidadeEstoque(qtdRecebida); 
                 estoqueRepository.save(novoEstoque);
             } else { 
                 Estoque estoqueExistente = estoqueOpt.get();
-                estoqueExistente.setQuantidadeEstoque(estoqueExistente.getQuantidadeEstoque() + quantidadeRecebidaNoLote);
+                estoqueExistente.setQuantidadeEstoque(estoqueExistente.getQuantidadeEstoque() + qtdRecebida);
                 estoqueRepository.save(estoqueExistente);
-            }
-            
-            // 5. Atualiza Status da Ordem para "Em Andamento" se for o primeiro recebimento
-            if (ordemCompra.getStatus() == StatusOrdemCompra.PEND) {
-                ordemCompra.setStatus(StatusOrdemCompra.ANDA);
             }
         }
         
-        // Salva o status atualizado da ordem
+        // --- 4. Atualização de Status da Ordem ---
+        // Verifica se todos os itens chegaram a ZERO (totalmente recebidos)
+        boolean todosRecebidos = ordemCompra.getItens().stream()
+                .allMatch(item -> item.getQuantidade() == 0);
+
+        if (todosRecebidos) {
+            ordemCompra.setStatus(StatusOrdemCompra.CONC);
+        } else if (ordemCompra.getStatus() == StatusOrdemCompra.PEND) {
+            // Se não acabou tudo, mas recebeu algo, muda para ANDAMENTO
+            ordemCompra.setStatus(StatusOrdemCompra.ANDA);
+        }
+        
         ordemCompraRepository.save(ordemCompra);
         
-        String mensagem = ordemCompra.getStatus().equals(StatusOrdemCompra.CONC) 
-                         ? "Itens recebidos com sucesso! Ordem de Compra CONCLUÍDA."
-                         : "Itens recebidos com sucesso! A Ordem de Compra está 'Em Andamento'.";
-                         
-        return mensagem;
+        return ordemCompra.getStatus().equals(StatusOrdemCompra.CONC) 
+               ? "Recebimento total concluído! Ordem finalizada." 
+               : "Itens recebidos! Saldo atualizado.";
     }
 
-    /**
-     * Conclui manualmente uma ordem de compra.
-     */
     @Transactional
     public void concluirOrdemManualmente(Integer idOrdemCompra) {
         OrdemCompra ordemCompra = ordemCompraRepository.findById(idOrdemCompra)
@@ -172,23 +167,18 @@ public class OrdemCompraService {
         log.info("Ordem de Compra #{} concluída manualmente.", idOrdemCompra);
     }
 
-    // --- Métodos de Busca ---
-
     @Transactional(readOnly = true) 
     public List<ItemOrdemCompra> getItensDaOrdem(Integer idOrdemCompra) {
         ordemCompraRepository.findById(idOrdemCompra)
             .orElseThrow(() -> new EntityNotFoundException("Ordem de compra não encontrada."));
-
         return itemOrdemCompraRepository.findByOrdemCompraId(idOrdemCompra); 
     }
     
     public Page<OrdemCompra> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ordemCompraRepository.findAll(pageable);
+        return ordemCompraRepository.findAll(PageRequest.of(page, size));
     }
 
     public Page<OrdemCompra> findByStatus(StatusOrdemCompra status, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return ordemCompraRepository.findByStatus(status, pageable);
+        return ordemCompraRepository.findByStatus(status, PageRequest.of(page, size));
     }
 }
