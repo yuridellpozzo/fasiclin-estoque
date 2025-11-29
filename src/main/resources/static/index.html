@@ -9,18 +9,59 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Estilo para o novo botão de concluir */
-        .btn-concluir {
-            padding: 5px 10px;
-            background-color: #27ae60; /* Verde */
-            color: white;
+        /* Estilos para as Abas de Navegação Interna */
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            font-weight: bold;
+            color: #7f8c8d;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover { color: #2c3e50; }
+        .tab-btn.active {
+            color: #2980b9;
+            border-bottom-color: #2980b9;
+        }
+
+        /* Botões de Ação na Tabela */
+        .btn-action {
+            padding: 6px 12px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
-            transition: background-color 0.3s;
+            margin-right: 5px;
+            color: white;
         }
-        .btn-concluir:hover { background-color: #229954; }
+        .btn-receber { background-color: #3498db; } /* Azul */
+        .btn-receber:hover { background-color: #2980b9; }
+        
+        .btn-concluir { background-color: #27ae60; } /* Verde */
+        .btn-concluir:hover { background-color: #219150; }
+
+        .btn-voltar {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .btn-voltar:hover { background-color: #7f8c8d; }
+
+        .hidden { display: none !important; }
     </style>
     <link rel="stylesheet" href="./styless.css"> 
 </head>
@@ -38,11 +79,7 @@
         <aside class="sidebar">
             <nav>
                 <a class="nav-item" data-page="home" onclick="showPage('home')">Início</a>
-                <a class="nav-item" data-page="produtos" onclick="showPage('produtos')">Produtos</a>
-                <a class="nav-item" data-page="pedidos" onclick="showPage('pedidos')">Meus Pedidos</a>
-                <a class="nav-item" data-page="perfil" onclick="showPage('perfil')">Perfil</a>
-                <a class="nav-item" data-page="config" onclick="showPage('config')">Configurações</a>
-                <a class="nav-item active" data-page="estoque" onclick="showPage('estoque')">Estoque</a>
+                <a class="nav-item active" data-page="estoque" onclick="showPage('estoque')">Gestão de Recebimento</a>
                 <a class="nav-item" data-page="admin" onclick="showPage('admin', this)">Admin DB</a>
             </nav>
             <button class="logout-btn" onclick="logout()">Sair</button>
@@ -51,21 +88,88 @@
         <main class="content">
             <div id="alertContainer"></div>
 
-            <div id="recebimentoPage" class="content-card">
-                <h2 class="section-title">Recebimento de Lote</h2>
+            <!-- PÁGINA PRINCIPAL DE ESTOQUE (Com Abas) -->
+            <div id="estoquePage" class="content-card">
+                <h2 class="section-title">Gestão de Recebimento de Ordens de Compra</h2>
+
+                <!-- Navegação por Abas -->
+                <div class="tabs-container" id="estoqueTabs">
+                    <button class="tab-btn active" onclick="switchTab('pendentes')">1. Novas (Pendentes)</button>
+                    <button class="tab-btn" onclick="switchTab('andamento')">2. Em Andamento</button>
+                    <button class="tab-btn" onclick="switchTab('concluidas')">3. Histórico (Concluídas)</button>
+                </div>
+
+                <!-- Lista: Pendentes -->
+                <div id="tab-pendentes" class="tab-content">
+                    <div class="table-container">
+                        <table id="tablePendentes">
+                            <thead>
+                                <tr>
+                                    <th>ID OC</th>
+                                    <th>Produto Principal</th>
+                                    <th>Total Itens</th>
+                                    <th>Data Prevista</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyPendentes"></tbody>
+                        </table>
+                        <p id="msgPendentes" class="hidden" style="text-align:center; padding: 20px;">Nenhuma ordem pendente.</p>
+                    </div>
+                </div>
+
+                <!-- Lista: Em Andamento -->
+                <div id="tab-andamento" class="tab-content hidden">
+                    <div class="table-container">
+                        <table id="tableAndamento">
+                            <thead>
+                                <tr>
+                                    <th>ID OC</th>
+                                    <th>Produto Principal</th>
+                                    <th>Progresso</th>
+                                    <th>Data Entrega</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyAndamento"></tbody>
+                        </table>
+                        <p id="msgAndamento" class="hidden" style="text-align:center; padding: 20px;">Nenhuma ordem em andamento.</p>
+                    </div>
+                </div>
+
+                <!-- Lista: Concluídas -->
+                <div id="tab-concluidas" class="tab-content hidden">
+                    <div class="table-container">
+                        <table id="tableConcluidas">
+                            <thead>
+                                <tr>
+                                    <th>ID OC</th>
+                                    <th>Produto Principal</th>
+                                    <th>Data Finalização</th>
+                                    <th>Valor Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyConcluidas"></tbody>
+                        </table>
+                        <p id="msgConcluidas" class="hidden" style="text-align:center; padding: 20px;">Nenhuma ordem concluída encontrada.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PÁGINA DE DETALHE (Formulário de Recebimento) - Inicialmente Escondida -->
+            <div id="detalheRecebimentoPage" class="content-card hidden">
+                <button class="btn-voltar" onclick="voltarParaLista()">← Voltar para Lista</button>
+                
+                <h2 class="section-title">Recebimento de Itens - OC #<span id="spanOcId"></span></h2>
                 
                 <form id="recebimentoForm" class="form-container">
-                    <div class="form-group">
-                        <label for="ordemCompra">Ordem de Compra:</label>
-                        <select id="ordemCompra" required>
-                            <option value="">Selecione uma ordem de compra...</option>
-                        </select>
-                    </div>
+                    <!-- Campo oculto para manter o ID da ordem selecionada -->
+                    <input type="hidden" id="ordemCompraIdSelecionada">
 
-                    <!-- Container para os itens dinâmicos -->
+                    <!-- Tabela de Itens Dinâmica -->
                     <div id="itensDaOrdemContainer"></div>
 
-                    <!-- Campos que só aparecem após selecionar a OC -->
                     <div id="formFields" class="hidden" style="margin-top: 30px;">
                         <div class="form-group">
                             <label for="responsavel">Responsável pelo Recebimento:</label>
@@ -82,55 +186,13 @@
                             <input type="password" id="senha" required>
                         </div>
                         <div class="form-actions" style="display: flex; gap: 20px; justify-content: center; margin-top: 30px;">
-                            <button type="submit" class="submit-btn">Concluir Recebimento</button>
-                            
-                            <button type="button" 
-                                    class="submit-btn" 
-                                    id="btnConcluirOrdem" 
-                                    onclick="confirmarConclusaoManual()" 
-                                    style="background-color: #2ecc71; /* Cor Verde */">
-                                Concluir Ordem
-                            </button>
+                            <button type="submit" class="submit-btn">Registrar Recebimento</button>
                         </div>
                     </div>
-
                 </form>
             </div>
 
-            <div id="ordensPage" class="content-card hidden">
-                <h2 class="section-title">Lista de Ordens de Compra</h2>
-                
-                <div class="filter-container">
-                    <button class="filter-btn active" onclick="filterOrdens('all', this)">Todas</button>
-                    <button class="filter-btn" onclick="filterOrdens('PEND', this)">Pendentes</button>
-                    <button class="filter-btn" onclick="filterOrdens('ANDA', this)">Em Andamento</button>
-                    <button class="filter-btn" onclick="filterOrdens('CONC', this)">Concluídas</button>
-                </div>
-
-                <div class="table-container">
-                    <div id="loadingSpinner" class="spinner hidden"></div>
-                    <table id="ordensTable" class="hidden">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Produto</th>
-                                <th>Quantidade</th>
-                                <th>Status</th>
-                                <th>Data Prevista</th>
-                                <th>Data Entrega</th>
-                                <th>Valor Total</th>
-                                <th>Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ordensTableBody">
-                        </tbody>
-                    </table>
-                    <div id="emptyMessage" class="hidden" style="text-align: center; padding: 40px; color: #666;">
-                        Nenhuma ordem de compra encontrada.
-                    </div>
-                </div>
-            </div>
-
+            <!-- Página Admin (Mantida) -->
             <div id="adminPage" class="content-card hidden">
                 <h2 class="section-title">Gerenciador de Conexões do Banco</h2>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -151,8 +213,7 @@
                                 <th>Ação</th>
                             </tr>
                         </thead>
-                        <tbody id="connectionsTableBody">
-                        </tbody>
+                        <tbody id="connectionsTableBody"></tbody>
                     </table>
                 </div>
             </div>

@@ -37,11 +37,11 @@ public class OrdemCompraService {
     @Autowired private ProdutoRepository produtoRepository;
     @Autowired private ItemOrdemCompraRepository itemOrdemCompraRepository;
     
+    // Repositório da nova tabela ITEM para validação
+    @Autowired private ItemRepository itemRepository;
+    
     @Autowired private EntityManager entityManager;
 
-    /**
-     * Processa o recebimento de itens, abatendo a quantidade pendente.
-     */
     @Transactional
     public String receberPedido(RecebimentoPedidoDto dto) {
         
@@ -52,6 +52,7 @@ public class OrdemCompraService {
         Profissional profissional = profissionalRepository.findById(usuario.getProfissional().getId())
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado."));
 
+        // Validação de Administrador (Tipo "1")
         if (profissional.getTipoProfi() == null || !profissional.getTipoProfi().equals("1")) {
             throw new RuntimeException("Somente o profissional administrador pode realizar esta operação.");
         }
@@ -70,33 +71,36 @@ public class OrdemCompraService {
             Produto produto = produtoRepository.findById(itemRecebido.getIdProduto())
                     .orElseThrow(() -> new RuntimeException("Produto ID " + itemRecebido.getIdProduto() + " não encontrado."));
 
+            // Validação de existência na tabela ITEM
+            if (!itemRepository.existsById(produto.getId())) {
+                throw new RuntimeException("ERRO: O produto '" + produto.getNome() + "' (ID " + produto.getId() + ") não existe na tabela ITEM. Cadastre-o antes.");
+            }
+
             ItemOrdemCompra itemDaOrdem = ordemCompra.getItens().stream()
                     .filter(item -> item.getProduto().getId().equals(produto.getId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Item não encontrado na Ordem de Compra."));
             
-            // --- CORREÇÃO LÓGICA: ABATER QUANTIDADE (Subtração) ---
+            // Abater Quantidade
             int qtdRecebida = itemRecebido.getQuantidadeRecebida();
-            int qtdPendente = itemDaOrdem.getQuantidade(); // O que falta receber
+            int qtdPendente = itemDaOrdem.getQuantidade(); 
 
             if (qtdRecebida > qtdPendente) {
                 throw new RuntimeException("A quantidade recebida (" + qtdRecebida + ") é maior que a pendente (" + qtdPendente + ") para o produto " + produto.getNome());
             }
 
             int novaQuantidadePendente = qtdPendente - qtdRecebida; 
-            
             itemDaOrdem.setQuantidade(novaQuantidadePendente); 
             itemOrdemCompraRepository.save(itemDaOrdem);
-            // ------------------------------------------------------
             
             // Criação do Lote
             Lote lote = new Lote();
             lote.setDataVencimento(itemRecebido.getDataVencimento());
             lote.setQuantidade(qtdRecebida); 
             lote.setOrdemCompra(ordemCompra);
-            lote.setIdItem(itemDaOrdem.getId()); 
             
-            // Datas e Nome do Lote
+            // Campos Obrigatórios
+            lote.setIdItem(produto.getId()); 
             lote.setDataValidade(itemRecebido.getDataVencimento());   
 
             if (itemRecebido.getDataFabricacao() != null) {
@@ -132,25 +136,19 @@ public class OrdemCompraService {
                 estoqueExistente.setQuantidadeEstoque(estoqueExistente.getQuantidadeEstoque() + qtdRecebida);
                 estoqueRepository.save(estoqueExistente);
             }
+            
+            // Atualiza Status para ANDAMENTO (apenas sai de PENDENTE)
+            if (ordemCompra.getStatus() == StatusOrdemCompra.PEND) {
+                ordemCompra.setStatus(StatusOrdemCompra.ANDA);
+            }
         }
         
-        // --- 4. Atualização de Status da Ordem ---
-        // Verifica se todos os itens chegaram a ZERO (totalmente recebidos)
-        boolean todosRecebidos = ordemCompra.getItens().stream()
-                .allMatch(item -> item.getQuantidade() == 0);
-
-        if (todosRecebidos) {
-            ordemCompra.setStatus(StatusOrdemCompra.CONC);
-        } else if (ordemCompra.getStatus() == StatusOrdemCompra.PEND) {
-            // Se não acabou tudo, mas recebeu algo, muda para ANDAMENTO
-            ordemCompra.setStatus(StatusOrdemCompra.ANDA);
-        }
+        // --- REMOVIDA LÓGICA DE CONCLUSÃO AUTOMÁTICA ---
+        // A ordem ficará em 'ANDA' até que você clique em "Concluir Ordem" manualmente.
         
         ordemCompraRepository.save(ordemCompra);
         
-        return ordemCompra.getStatus().equals(StatusOrdemCompra.CONC) 
-               ? "Recebimento total concluído! Ordem finalizada." 
-               : "Itens recebidos! Saldo atualizado.";
+        return "Itens recebidos com sucesso! Saldo atualizado.";
     }
 
     @Transactional

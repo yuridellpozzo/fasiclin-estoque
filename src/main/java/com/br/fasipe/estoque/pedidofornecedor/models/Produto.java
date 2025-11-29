@@ -1,8 +1,8 @@
 package com.br.fasipe.estoque.pedidofornecedor.models;
 
 import jakarta.persistence.*;
-import java.util.Objects;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Entity
 @Table(name = "PRODUTO")
@@ -13,14 +13,14 @@ public class Produto {
     @Column(name = "IDPRODUTO")
     private Integer id;
 
-    @Column(name = "NOME") // NOME_PRODUTO corrigido para NOME (conforme SQL)
+    @Column(name = "NOME")
     private String nome;
     
-    @Column(name = "DESCRICAO") // Adicionado conforme o SQL
+    @Column(name = "DESCRICAO")
     private String descricao;
     
     @ManyToOne
-    @JoinColumn(name = "ID_UNMEDI") // Alterado para relacionamento
+    @JoinColumn(name = "ID_UNMEDI")
     private UnidadeMedida unidadeMedida;
 
     @Column(name = "CODBARRAS")
@@ -29,7 +29,6 @@ public class Produto {
     @Column(name = "TEMPIDEAL")
     private BigDecimal tempIdeal;
     
-    // CAMPOS QUE CAUSAVAM O ERRO (Adicionados com nomes em camelCase para o Java)
     @Column(name = "STQMAX")
     private Integer stqMax; 
 
@@ -43,11 +42,8 @@ public class Produto {
     @JoinColumn(name = "ID_ALMOX")
     private Almoxarifado almoxarifado;
 
-    // CONSTRUTOR PADRÃO
     public Produto() {
     }
-
-    // GETTERS e SETTERS
 
     public Integer getId() {
         return id;

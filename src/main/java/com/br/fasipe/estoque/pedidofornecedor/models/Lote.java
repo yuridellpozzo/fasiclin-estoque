@@ -3,6 +3,8 @@ package com.br.fasipe.estoque.pedidofornecedor.models;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name = "LOTE")
 public class Lote {
@@ -28,6 +30,7 @@ public class Lote {
 
     @ManyToOne
     @JoinColumn(name = "ID_ORDCOMP")
+    @JsonBackReference
     private OrdemCompra ordemCompra;
 
     @Column(name = "IDITEM") 

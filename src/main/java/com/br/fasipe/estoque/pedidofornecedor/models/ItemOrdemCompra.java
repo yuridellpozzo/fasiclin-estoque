@@ -15,10 +15,11 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero; // Importante: Aceita 0
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name = "ITEM_ORDCOMP")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -40,12 +41,15 @@ public class ItemOrdemCompra {
     @JoinColumn(name = "ID_PRODUTO", nullable = false)
     private Produto produto;
 
-    @Positive(message = "A quantidade deve ser maior que zero.")
+    // --- CORREÇÃO CRÍTICA ---
+    // Alterado de @Positive para @PositiveOrZero para aceitar saldo 0 (item concluído)
+    @PositiveOrZero(message = "A quantidade deve ser maior ou igual a zero.") 
     @Column(name = "QNTD", nullable = false)
     private int quantidade;
+    // ------------------------
 
     @NotNull(message = "O valor do item é obrigatório.")
-    @Positive(message = "O valor do item deve ser positivo.")
+    @PositiveOrZero(message = "O valor do item deve ser positivo ou zero.")
     @Column(name = "VALOR", nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 

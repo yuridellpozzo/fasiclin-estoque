@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "ORDEMCOMPRA")
 public class OrdemCompra {
@@ -34,10 +36,12 @@ public class OrdemCompra {
 
     // --- Mapeamento para ItemOrdemCompra ---
     @OneToMany(mappedBy = "ordemCompra", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
     private Set<ItemOrdemCompra> itens = new HashSet<>();
     
     // --- Mapeamento CRUCIAL para Lote (FetchType.EAGER é necessário para a soma em memória) ---
     @OneToMany(mappedBy = "ordemCompra", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference
     private Set<Lote> lotes = new HashSet<>(); 
 
     // Construtores
